@@ -1,0 +1,14 @@
+{
+  "functions": {
+    "api/pdf-edit.py": {
+      "runtime": "python3.9",
+      "maxDuration": 60
+    }
+  },
+  "buildCommand": "prisma generate && next build",
+  "env": {
+    "PRISMA_DATABASE_URL": "@prisma_database_url",
+    "POSTGRES_URL": "@postgres_url",
+    "ANTHROPIC_API_KEY": "@anthropic_api_key"
+  }
+}

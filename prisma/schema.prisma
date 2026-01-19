@@ -1,0 +1,31 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("PRISMA_DATABASE_URL")
+}
+
+model PDFDocument {
+  id        String   @id @default(cuid())
+  fileName  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  versions  PDFVersion[]
+}
+
+model PDFVersion {
+  id          String      @id @default(cuid())
+  documentId  String
+  versionNum  Int
+  blobUrl     String
+  blobKey     String
+  sizeBytes   Int
+  createdAt   DateTime    @default(now())
+
+  document    PDFDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, versionNum])
+  @@index([documentId])
+}
