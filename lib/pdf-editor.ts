@@ -1,4 +1,4 @@
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts, degrees } from 'pdf-lib';
 import { ClaudeResponse } from './types';
 
 export async function applyPDFEdits(
@@ -29,8 +29,8 @@ export async function applyPDFEdits(
               if (pageNum >= 1 && pageNum <= pages.length) {
                 const page = pdfDoc.getPage(pageNum - 1);
                 const currentRotation = page.getRotation().angle;
-                const degrees = (currentRotation + action.rotation) as 0 | 90 | 180 | 270;
-                page.setRotation(degrees);
+                const newRotation = (currentRotation + action.rotation) % 360;
+                page.setRotation(degrees(newRotation));
               }
             }
           }
