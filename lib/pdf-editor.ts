@@ -29,10 +29,8 @@ export async function applyPDFEdits(
               if (pageNum >= 1 && pageNum <= pages.length) {
                 const page = pdfDoc.getPage(pageNum - 1);
                 const currentRotation = page.getRotation().angle;
-                page.setRotation({
-                  type: 'degrees',
-                  angle: currentRotation + action.rotation,
-                });
+                const degrees = (currentRotation + action.rotation) as 0 | 90 | 180 | 270;
+                page.setRotation(degrees);
               }
             }
           }
