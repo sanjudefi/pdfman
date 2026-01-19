@@ -1,7 +1,5 @@
 import { put, del } from '@vercel/blob';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { db } from './db';
 
 export interface StorageAdapter {
   uploadPDF(file: Buffer, fileName: string, documentId: string, versionNum: number): Promise<{ url: string; key: string }>;
@@ -24,7 +22,7 @@ export class VercelBlobAdapter implements StorageAdapter {
     });
 
     // Save to database
-    await prisma.pDFVersion.create({
+    await db.pDFVersion.create({
       data: {
         documentId,
         versionNum,
@@ -38,7 +36,7 @@ export class VercelBlobAdapter implements StorageAdapter {
   }
 
   async getPDFUrl(documentId: string, versionNum: number): Promise<string | null> {
-    const version = await prisma.pDFVersion.findUnique({
+    const version = await db.pDFVersion.findUnique({
       where: {
         documentId_versionNum: {
           documentId,
