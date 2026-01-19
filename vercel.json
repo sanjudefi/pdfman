@@ -1,9 +1,3 @@
 {
-  "functions": {
-    "api/pdf-edit.py": {
-      "runtime": "python3.9",
-      "maxDuration": 60
-    }
-  },
   "buildCommand": "prisma generate && next build"
 }

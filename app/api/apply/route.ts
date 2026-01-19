@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { storage } from '@/lib/storage';
 import { ClaudeResponse } from '@/lib/types';
+import { applyPDFEdits } from '@/lib/pdf-editor';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -160,33 +161,6 @@ async function callClaude(message: string): Promise<ClaudeResponse> {
   }
 }
 
-async function applyPDFEdits(
-  pdfBuffer: Buffer,
-  actions: ClaudeResponse['actions']
-): Promise<Buffer> {
-  // Call Python microservice
-  const response = await fetch(
-    process.env.PDF_EDIT_SERVICE_URL || 'http://localhost:3000/api/pdf-edit',
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        pdf: pdfBuffer.toString('base64'),
-        actions,
-      }),
-    }
-  );
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'PDF editing failed');
-  }
-
-  const data = await response.json();
-  return Buffer.from(data.pdf, 'base64');
-}
 
 export async function POST(request: NextRequest) {
   try {
