@@ -13,23 +13,27 @@ export async function applyPDFEdits(
       switch (action.type) {
         case 'delete_pages':
           // Delete pages (in reverse order to maintain indices)
-          const pagesToDelete = [...action.pages].sort((a, b) => b - a);
-          for (const pageNum of pagesToDelete) {
-            if (pageNum >= 1 && pageNum <= pages.length) {
-              pdfDoc.removePage(pageNum - 1); // Convert to 0-indexed
+          if (action.pages && action.pages.length > 0) {
+            const pagesToDelete = [...action.pages].sort((a, b) => b - a);
+            for (const pageNum of pagesToDelete) {
+              if (pageNum >= 1 && pageNum <= pages.length) {
+                pdfDoc.removePage(pageNum - 1); // Convert to 0-indexed
+              }
             }
           }
           break;
 
         case 'rotate_pages':
-          for (const pageNum of action.pages) {
-            if (pageNum >= 1 && pageNum <= pages.length) {
-              const page = pdfDoc.getPage(pageNum - 1);
-              const currentRotation = page.getRotation().angle;
-              page.setRotation({
-                type: 'degrees',
-                angle: currentRotation + action.rotation,
-              });
+          if (action.pages && action.pages.length > 0 && action.rotation) {
+            for (const pageNum of action.pages) {
+              if (pageNum >= 1 && pageNum <= pages.length) {
+                const page = pdfDoc.getPage(pageNum - 1);
+                const currentRotation = page.getRotation().angle;
+                page.setRotation({
+                  type: 'degrees',
+                  angle: currentRotation + action.rotation,
+                });
+              }
             }
           }
           break;
@@ -66,6 +70,10 @@ async function addReplacementText(
 ) {
   // pdf-lib limitation: Can't search for existing text
   // This is a simplified implementation that adds text overlay
+  if (!action.find || !action.replace) {
+    return; // Skip if find/replace values are missing
+  }
+
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const pages = pdfDoc.getPages();
 
@@ -101,6 +109,10 @@ async function addRedactionBoxes(
 ) {
   // Basic redaction: add black boxes
   // Note: This doesn't actually search for patterns - that requires PDF parsing
+  if (!action.pattern) {
+    return; // Skip if pattern is missing
+  }
+
   const pages = pdfDoc.getPages();
 
   for (const page of pages) {
