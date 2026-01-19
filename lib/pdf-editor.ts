@@ -64,7 +64,7 @@ export async function applyPDFEdits(
 
 async function addReplacementText(
   pdfDoc: PDFDocument,
-  action: Extract<ClaudeResponse['actions'][0], { type: 'replace_text' }>
+  action: ClaudeResponse['actions'][0]
 ) {
   // pdf-lib limitation: Can't search for existing text
   // This is a simplified implementation that adds text overlay
@@ -103,7 +103,7 @@ async function addReplacementText(
 
 async function addRedactionBoxes(
   pdfDoc: PDFDocument,
-  action: Extract<ClaudeResponse['actions'][0], { type: 'redact' }>
+  action: ClaudeResponse['actions'][0]
 ) {
   // Basic redaction: add black boxes
   // Note: This doesn't actually search for patterns - that requires PDF parsing
