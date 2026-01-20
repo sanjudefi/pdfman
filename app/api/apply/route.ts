@@ -132,7 +132,7 @@ async function callClaude(message: string): Promise<ClaudeResponse> {
       'content-type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-3-5-sonnet-20240620',
       max_tokens: 4096,
       system: CLAUDE_SYSTEM_PROMPT,
       messages: [
