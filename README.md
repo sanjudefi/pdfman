@@ -1,0 +1,350 @@
+# PDF Editor - AI-Powered PDF Editing with Claude
+
+A Next.js application that allows you to edit PDFs using natural language commands powered by Claude AI.
+
+## Features
+
+- 🎯 **Natural Language Editing**: Just describe what you want to change
+- 📄 **PDF Viewer**: Real-time preview of your PDF using PDF.js
+- 💬 **Chat Interface**: Conversational UI for editing commands
+- 🔄 **Version Control**: Each edit creates a new version
+- ⚡ **Fast & Scalable**: Deployed on Vercel with serverless functions
+- 🔒 **Secure**: API keys stored server-side, never exposed to client
+
+## Architecture
+
+### Frontend (Next.js App Router)
+- **PDF Viewer** (left): Displays the current PDF using PDF.js
+- **Chat Panel** (right): Interface for editing commands
+
+### Backend
+- **Node.js API Routes**: Handle uploads, Claude integration, and orchestration
+- **Python Microservice**: PyMuPDF-based PDF editing engine
+- **Vercel Blob**: Stores PDF files and versions
+- **Prisma + PostgreSQL**: Tracks documents and versions
+
+### AI Integration
+- **Claude API**: Converts natural language to JSON actions
+- Actions include: `replace_text`, `delete_pages`, `redact`, `rotate_pages`
+
+## Sample Commands
+
+Try these editing commands:
+
+```
+Replace "John Doe" with "Jane Doe" everywhere
+Delete page 2
+Redact all email addresses
+Replace "$10,000" with "$12,000" on page 3
+Remove all phone numbers
+Rotate page 1 by 90 degrees
+```
+
+## Sample JSON Actions
+
+When you send a message, Claude returns JSON actions like these:
+
+### Replace Text
+```json
+{
+  "actions": [
+    {
+      "type": "replace_text",
+      "find": "John Doe",
+      "replace": "Jane Doe",
+      "scope": "all"
+    }
+  ]
+}
+```
+
+### Delete Pages
+```json
+{
+  "actions": [
+    {
+      "type": "delete_pages",
+      "pages": [2, 3]
+    }
+  ]
+}
+```
+
+### Redact Email Addresses
+```json
+{
+  "actions": [
+    {
+      "type": "redact",
+      "pattern": "email"
+    }
+  ]
+}
+```
+
+### Replace on Specific Page
+```json
+{
+  "actions": [
+    {
+      "type": "replace_text",
+      "find": "$10,000",
+      "replace": "$12,000",
+      "scope": "page",
+      "page": 3
+    }
+  ]
+}
+```
+
+### Rotate Pages
+```json
+{
+  "actions": [
+    {
+      "type": "rotate_pages",
+      "pages": [1, 2],
+      "rotation": 90
+    }
+  ]
+}
+```
+
+### No-op (Can't Perform Action)
+```json
+{
+  "actions": [
+    {
+      "type": "noop",
+      "message": "Cannot change text colors - only replacement and redaction are supported"
+    }
+  ]
+}
+```
+
+## Local Development
+
+### Prerequisites
+
+- Node.js 18+ and npm
+- Python 3.9+
+- PostgreSQL database (or use provided Prisma credentials)
+
+### Setup
+
+1. **Clone and install dependencies**:
+```bash
+npm install
+```
+
+2. **Set up environment variables**:
+
+The `.env` file is already configured with the provided credentials:
+
+```env
+# Database (use your actual values)
+POSTGRES_URL="your_postgres_connection_url"
+PRISMA_DATABASE_URL="your_prisma_accelerate_url"
+
+# Anthropic API (use your actual key)
+ANTHROPIC_API_KEY="your_claude_api_key"
+
+# Vercel Blob Storage (auto-configured on Vercel)
+# BLOB_READ_WRITE_TOKEN="vercel_blob_..."
+```
+
+**Note**: The actual credentials are already configured in your local `.env` file.
+
+3. **Initialize database**:
+```bash
+npx prisma db push
+npx prisma generate
+```
+
+4. **Run development server**:
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Testing Python Function Locally
+
+The Python PDF editing function runs as a Vercel serverless function. For local testing:
+
+1. Install Python dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+2. The function will be called automatically by the Next.js API routes when deployed.
+
+## Deployment to Vercel
+
+### 1. Install Vercel CLI (optional)
+```bash
+npm i -g vercel
+```
+
+### 2. Deploy via Vercel Dashboard (Recommended)
+
+1. Push your code to GitHub
+2. Go to [vercel.com](https://vercel.com)
+3. Click "New Project"
+4. Import your GitHub repository
+5. Configure environment variables:
+
+   **Required Environment Variables**:
+   ```
+   POSTGRES_URL
+   PRISMA_DATABASE_URL
+   ANTHROPIC_API_KEY
+   ```
+
+   **Vercel Blob** (auto-configured):
+   - Vercel will automatically add `BLOB_READ_WRITE_TOKEN` when you enable Blob storage
+   - Go to your project → Storage → Create Database → Blob
+
+6. Click "Deploy"
+
+### 3. Deploy via CLI
+
+```bash
+vercel
+```
+
+Follow the prompts and add environment variables when asked.
+
+### Environment Variables on Vercel
+
+Add these in your Vercel project settings (Settings → Environment Variables):
+
+| Variable | Value | Source |
+|----------|-------|--------|
+| `POSTGRES_URL` | Your PostgreSQL URL | Provided |
+| `PRISMA_DATABASE_URL` | Your Prisma Accelerate URL | Provided |
+| `ANTHROPIC_API_KEY` | Your Claude API key | Provided |
+| `BLOB_READ_WRITE_TOKEN` | Auto-generated by Vercel | Vercel Blob |
+
+**Note**: `BLOB_READ_WRITE_TOKEN` is automatically added when you create a Vercel Blob store in your project.
+
+## Project Structure
+
+```
+pdfman/
+├── app/
+│   ├── api/
+│   │   ├── upload/route.ts      # Handles PDF uploads
+│   │   └── apply/route.ts       # Claude integration + PDF editing
+│   ├── page.tsx                 # Main app page
+│   ├── layout.tsx              # Root layout
+│   └── globals.css             # Global styles
+├── components/
+│   ├── PDFViewer.tsx           # PDF.js viewer component
+│   └── ChatPanel.tsx           # Chat interface
+├── lib/
+│   ├── storage.ts              # Vercel Blob adapter
+│   ├── db.ts                   # Prisma client
+│   └── types.ts                # TypeScript types
+├── api/
+│   └── pdf-edit.py             # Python PDF editing service
+├── prisma/
+│   └── schema.prisma           # Database schema
+├── requirements.txt            # Python dependencies
+├── vercel.json                # Vercel configuration
+└── package.json               # Node dependencies
+```
+
+## Technical Details
+
+### Storage Architecture
+
+- **Vercel Blob**: Stores all PDF files
+- **PostgreSQL**: Tracks document metadata and versions
+- Each edit creates a new version (immutable history)
+- File naming: `pdfs/{documentId}/v{versionNum}-{fileName}.pdf`
+
+### PDF Editing Engine (PyMuPDF)
+
+The Python service uses PyMuPDF (fitz) for powerful PDF manipulation:
+
+- **Text Replacement**: Uses search_for() → add_redact_annot() → apply_redactions() → insert_textbox()
+- **Redaction**: Regex-based pattern matching with black boxes
+- **Page Deletion**: Direct page removal
+- **Page Rotation**: 90°, 180°, or 270° rotation
+
+### Claude Integration
+
+- Uses Claude 3.5 Sonnet via Messages API
+- System prompt enforces JSON-only output
+- No streaming (returns complete JSON response)
+- Model: `claude-3-5-sonnet-20241022`
+
+### Security
+
+- ✅ API keys stored server-side only (Node.js runtime)
+- ✅ Client never receives ANTHROPIC_API_KEY
+- ✅ Vercel Blob uses signed URLs with expiration
+- ✅ All API routes use Node.js runtime (not Edge)
+
+## Troubleshooting
+
+### PDF Upload Fails
+
+- Check Vercel Blob is enabled in project settings
+- Verify `BLOB_READ_WRITE_TOKEN` environment variable exists
+- Check file size (Vercel has body size limits)
+
+### Claude API Errors
+
+- Verify `ANTHROPIC_API_KEY` is set correctly
+- Check API quota at console.anthropic.com
+- Review error messages in Vercel logs
+
+### Python Function Timeout
+
+- Python functions have 60s max duration (configured in vercel.json)
+- Large PDFs may need optimization
+- Check Vercel function logs for details
+
+### Database Connection Issues
+
+- Verify `PRISMA_DATABASE_URL` is correct
+- Run `npx prisma db push` to sync schema
+- Check database connection from Vercel logs
+
+## Extending the Project
+
+### Adding New PDF Actions
+
+1. Update `lib/types.ts` with new action type
+2. Add handler in `api/pdf-edit.py`
+3. Update Claude system prompt in `app/api/apply/route.ts`
+
+### Switching Storage Providers
+
+The storage adapter interface (`lib/storage.ts`) can be swapped:
+
+- Implement `StorageAdapter` interface
+- Current: `VercelBlobAdapter`
+- Easy migration to: AWS S3, Google Cloud Storage, etc.
+
+### Adding Authentication
+
+- Integrate NextAuth.js or Clerk
+- Add user ownership to PDFDocument model
+- Filter documents by authenticated user
+
+## License
+
+MIT
+
+## Credits
+
+Built with:
+- [Next.js](https://nextjs.org/)
+- [Claude AI](https://www.anthropic.com/)
+- [PDF.js](https://mozilla.github.io/pdf.js/)
+- [PyMuPDF](https://pymupdf.readthedocs.io/)
+- [Vercel](https://vercel.com/)
+- [Prisma](https://www.prisma.io/)
